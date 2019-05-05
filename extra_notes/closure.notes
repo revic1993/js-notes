@@ -1,0 +1,85 @@
+-----------------------------------------------------------
+    Closure
+-----------------------------------------------------------
+
+==> What is Closure?
+	-	Closure is a function that remembers its lexical scope even if its executed outside of its lexical scope.
+	- 	Its the ability of a function to remember and access those variable even outside of its scope
+[js]
+function foo(){
+	var baz = "asdf";
+	return function(){
+		console.log(baz);
+	}
+}
+function bam(){
+	foo()();
+}
+bam();
+[js]
+-> In the above snippet the closure function() that logs #baz# remembers #baz# when it is called outside of its scope in bam() and doesn't allow #baz# to be garbage collected.
+-> so in summary the function() closes over variable #baz# to not allow it to be garbage collected.
+-> closure goes as deep as the variables and preserves access to them
+
+[js]
+for(var i=0;i<10;i++){
+	(function(i){
+		setTimeout(function(i){
+		console.log(i)
+		},i*1000);
+	})(i);
+}
+[js]
+-> In above snippet without #IIFE(immediately invoked function expression)# will print 10 every time just cause the i would be constant because its var and attached to its lexical scope 
+   and the loop would have run before #settimeout# code is executed. But with #IIFE# the i new every time. 
+-> So the i on line 28 will be closing over i on line 27.
+[js]
+for(let i=0;i<10;i++){
+	setTimeout(function(){
+		console.log(i)
+	},i*1000);
+}
+[js]
+-> this is the same as #IIFE# as let allows us to create block level scope and new i is created everytime which is preserved by #setTimeout# closure.
+-> closure is not a function and a function is not a closure =>
+	=> # A closure is characteristic of function in a lexically scoped environment which allows function to continue to access variable outside of itself even when that function is passed and executed in different location.#
+
+-----------------------------------------------------------
+    Module Pattern
+-----------------------------------------------------------
+# Encapsulation # is essentially used for hiding of code. Not exposing variables and method unnecessarily.
+[js]
+var foo = (function(){
+		var bar = "baz"; //acts as a private variable
+		return { // represents public api, but can't be accessed within IIFE
+			b : function(){ 
+				console.log(bar); //closure still has access to its lexical scope variables and preserves it outside the scope on #line 59
+			}
+		};
+	})();
+foo.b();// baz
+[js]
+=> In above snippet encapsulation is achieved by using #IIFE#. So the bar variable acts inside the scope of #IIFE# and the b variable is returned value that is assigned to foo 
+	which inturns has closure that has access to the bar variable.
+#Characteristic of Closure#
+1. We need to have outer enclosing closure that runs atleast once.
+2. There needs to be atleast one internal function that returns public api that has closure over internal state(lexical scope).
+
+#ES6+ module pattern#
+[js]
+//foo.js #
+var o = {bar:"bar"};
+export function bar(){
+	return o.bar;
+}
+//foo.js ends
+import {bar} from "foo.js";
+bar(); //bar
+
+import * as foo from "foo.js";
+foo.bar(); //bar
+[js]
+=> Modules are file based.
+=> Entire content of files are treated as private/module content. So for 100 modules we need 100 files. But that wont be a problem cause with ES6+ rolling out HTTP 2.0 rolled out 
+	which had persistent socket connection over which it would be better to have multiple files to be downloaded rather than single large file.
+=> Modules are singleton.

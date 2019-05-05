@@ -1,0 +1,145 @@
+-----------------------------------------------------------
+    Coercion
+-----------------------------------------------------------
+
+--- Abstract Operations ---
+#ToString#
+	- different than toString method.
+	- Its a set of steps that js calls for anytime we want to convert a value to a string.
+	=> Calls on Primitive
+		- null -> "null"
+		- undefined -> "undefined"
+		- true	-> "true"
+		- false -> "false"
+		- 3.14 -> "3.15"
+		- 0 -> "0"
+		- -0 -> "0" //only exception
+	=> Calls on Non-primitive
+		- dispatches against the actual toString method of that value
+[js]
+[];//""
+[1,2,3];//"1,2,3"
+[null,undefined];//","
+[[[],[],[]],[]];//",,,"
+[,,,];//",,,"
+{};//"[object Object]"
+{a:2};//"[object Object]"
+[js]
+
+#ToNumber# 
+=> On Primitive
+[js]
+"";//0
+"0";//0
+"-0";//-0
+"009";//9
+"3.14";//3.14
+"0.";//0
+".0";//0
+".";//NaN
+"0xaf";//175
+false;//0
+true;//1
+null;//0
+undefined;//NaN
+[js]
+=> !line31! is a special case. Its root for all the bugs of coercion in js. 
+=> !line 42 and 43! is a bad decision.
+=> #ToNumber# on non-primitive data types calls #ToPrimitive# first.
+	- #ToPrimitive# -> dispatches valueOf() and then dispatches toString().
+[js]
+[""];//0
+["0"];//0
+["-0"];//-0
+[null];//0
+[undefined];//0
+[1,2,3];//NaN
+[[[[]]]];//0
+[js]
+=> first toString of each array value is called and then ToNumber is called.
+#ToBoolean#
+=> #Falsy# and #Truthy#
+=> #Falsy# if the #ToBoolean# operation on any value it will always produce false.
+	- ""
+	- 0,+0,-0
+	- null
+	- undefined
+	- NaN
+	- false
+=> #Truthy# if it doesnt falls on the above list its Truthy.
+#**The above rules only apply if ToBoolean operation is actually invoked**#
+--- Explicit Coercion ---
+-> parsing and coercing are different things
+-> parsing is going through the string and see characters that matches and stops as soon as unrecognized characters are spotted.
+[js]
+var foo = "123px";
+var baz = parseInt(foo); //123 - parsing
+var boo = Number(foo); //NaN - coercion
+var fii = +foo; //NaN,does exactly as Number(foo)
+baz = 123;
+baz.toString();//"123"
+
+//boolean
+var foo = "123";
+var baz = Boolean(foo);//true
+baz = !!foo; //true
+baz = foo ? true : false; //true
+[js]
+-> dont use parsing for coercion and vice version.
+-> !line 81! primitive value doesnt have methods. JS will automatically coerce a primitive to its object wrapper counterpart so that we can call a method against it. Its called boxing.
+-> !line 86! -> it takes whatever you pass it and coerces it to boolean if its not already boolean by calling #ToBoolean#. Then it flips the result and negate the result. 
+				So to counter the first flip another negate is added to get correct result.
+-> !line 87! -> first implicit coercion is done on foo to dertermine if its true or false.
+
+--- Date and Numbers ---
+[js]
+var now = +new Date(); // timestamp
+now = Date.now(); //ES5 only
+var foo = "foo";
+// ~N -> -(N+1);
+if(~foo.indexOf("f")){ // foo.indexOf("d") will give -1 
+	alert("found it");
+}
+// ES7 - Array.includes( we can use string as array) -> actual returns boolean
+[js]
+
+--- implicit coercion ---
+[js]
+var foo = "123";
+var bar = foo - 0; //implicit coercion
+bar;//123
+
+bar = foo - "0"; //123
+bar = foo/ 1; //123
+bar = 456;
+foo = baz+""; //"456" -> + operator is overloaded, it says if either one of the operand is string prefer concatination else do numeric addition.
+foo = baz-""; //45
+foo = 0;
+if(foo == false){
+	alert("yay");
+}
+var bar = foo || "foo"; //"foo" default value idiom.
+
+var foo = "123";
+if(foo == true){ // as == prefers to compare numeric values it coerce both foo and true to numbers -> 123 == 1
+	alert("hello"); //never gets called
+}
+var foo = []; // as its not on falsy list its truthy.
+if(foo){
+	alert("hello"); //hello
+}
+if(foo == false){ // converts [] -> number which is 0 and false to 0 so 0 == 0.
+	alert("hello");
+}
+[js]
+-> !line 119! is a happy accident. == operators prefers to compare numbers. So instead of 0 converted to false using #ToBoolean#. false is converted to number 0 using #ToNumber#.
+
+--- Double equals --- 
+-> #refer#!coercion_equality.png!
+[]==![]; //true - cause the ! operator converts [] into boolean and as [] is not on falsy list it returns true. now the true is converted to false by ! operator and [] is converted to 
+		// number cause of == operator so 0 == false -> 0 == 0 -> hence true.
+--- double vs triple equal ---
+# == allows coercion and === doesnt allows coercion. # -> refer !equality_spec.png!
+# Use explicit coercion where its safer and implicit coercion where its more helpful#
+
+

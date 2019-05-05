@@ -1,0 +1,112 @@
+-----------------------------------------------------------
+    This
+-----------------------------------------------------------
+
+[js]
+function foo(num) {
+console.log( "foo: " + num );
+// keep track of how many times `foo` is called
+// Note: `this` IS actually `foo` now, based on
+// how `foo` is called (see below)
+this.count++;
+}
+foo.count = 0;
+var i;
+for (i=0; i<10; i++) {
+if (i > 5) {
+// using `call(..)`, we ensure the `this`
+// points at the function object (`foo`) itself
+foo.call( foo, i );
+}
+}
+// foo: 6
+// foo: 7
+// foo: 8
+// foo: 9
+// how many times was `foo` called?
+console.log( foo.count ); //4
+[js]
+=>  Above snippet demonstrates replacement of #this# inside function.
+=>  When a function is invoked, an activation record, otherwise known as an execution context, is created. This record contains information
+	about where the function was called from (the call-stack), how the function was invoked, what parameters were passed, etc. One of the
+	properties of this record is the #this# reference, which will be used for the duration of that function’s execution.
+
+-=- Call Site -=-
+[js]
+function baz() {
+// call-stack is: `baz`
+// so, our call-site is in the global scope
+console.log( "baz" );
+bar(); // <-- call-site for `bar`
+}
+function bar() {// call-stack is: `baz` -> `bar`
+// so, our call-site is in `baz`
+console.log( "bar" );
+foo(); // <-- call-site for `foo`
+}
+function foo() {
+// call-stack is: `baz` -> `bar` -> `foo`
+// so, our call-site is in `bar`
+console.log( "foo" );
+}
+baz(); // <-- call-site for `baz`
+[js]
+=> 	Take care when analyzing code to find the actual call-site (from the call-stack), 
+	because it’s the only thing that matters for #this# binding.
+[js]
+function foo() {
+	"use strict";
+	console.log( this.a );
+}
+var a = 2;
+foo(); //ReferenceError : 'this is undefined'
+//====//
+function foo() {
+	console.log( this.a );
+}
+var a = 2;
+(function(){
+	"use strict";
+	foo(); // 2
+})();
+[js]
+
+!Important!
+=>If strict mode is in effect, the global object is not eligible for the default binding, so the #this# is instead set to undefined.
+=> the overall this binding rules are entirely based on the call-site, the global object is only eligible for the default binding 
+	if the contents of foo() are not running in strict mode; the strict mode state of the call-site of foo() is irrelevant like on 
+	!line 69!.
+
+[js]
+function foo() {
+	console.log( this.a );
+}
+var obj = {
+	a: 2,
+	foo: foo
+};
+var bar = obj.foo;
+var a = "oops, global"; // `a` also property on global object
+bar(); //"oops,global"
+[js]
+=>  Even though bar appears to be a reference to obj.foo, in fact, it’s really just another reference to foo itself. Moreover, the call-site is what matters, 
+	and the call-site is bar(), which is a plain, undecorated call, and thus the default binding applies.
+!Important!
+ => All” functions in the language have some utilities available to them (via their [[Prototype]]—more on that later), 
+ 	which can be useful for this task. Specifically, functions have call(..) and apply(..) methods.
+!Important!
+=> Order of precedence for #this# => default < implicit < explicit < #new# keyword.
+[js]
+function foo(p1,p2) {
+this.val = p1 + p2;
+}
+// using `null` here because we don't care about
+// the `this` hard-binding in this scenario, and
+// it will be overridden by the `new` call anyway!
+var bar = foo.bind( null, "p1" );
+var baz = new bar( "p2" );
+baz.val; // p1p2
+[js]
+=>  One of the capabilities of bind(..) is that any arguments passed after the first this binding argument are defaulted as standard
+	arguments to the underlying function
+

@@ -1,0 +1,78 @@
+-----------------------------------------------------------
+    Object Orienting
+-----------------------------------------------------------
+
+#---------------- this	---------------------#
+-> Every* function while executing has reference to its current execution context called #this#.
+-> It is only dependent on "How was the function called?". Thats the only thing that matters.
+-> In nonstrict mode, if theres not local binding, this keyword defaults to global object.
+-> In strict mode, the default is undefined so the below code on !Line 13! will throw error.
+#SNIPPET1#
+[js]
+function foo(){
+	console.log(this.bar); //in strict mode it will throw error cause this by default in strict mode is undefined, while in nonstrict mode it defaults to global
+						   // and its always a mistake to call this aware function like on line 19
+}
+var bar = "bar1";
+var o2 = {bar:"bar2",foo:foo};
+var o3 = {bar:"bar3",foo:foo};
+foo(); //bar1 - defaulting to global scope results in bar1. 
+o2.foo(); //bar2 - How was the function called, by context object o2 so this referes to scope of o2 
+o3.foo(); //bar3
+[js]
+-> !IMPORTANT! => this defaults to global scope and not the scope one level above upon not finding the variable in its scope.
+-> Line 19 and 20 is using implicit binding rule. The foo is passed as reference to context object o2 and it uses its context for this.
+-> if the foo is called from different site by passing as an argument in other function than that function overwrites this of o2 with itself. 
+#-- So this is unreliable as we are not incontrol of how they are going to be invoked in implicit binding method--#
+#SNIPPET2#
+[js]
+function foo(){
+	console.log(this.bar);
+}
+var bar = "baz1";
+var obj = {bar:"baz2"};
+foo(); // bar1
+foo.call(obj);//first argument passed to call or apply is used as this binding for the function invocation 
+				// Hard coded , explicit binding
+[js]
+-> In above snippet we use call for explicit calling of function using call.
+#--- While in explicit binding we are explicitly passing the context of this as an argument thereby taking back control of the way function behaves---#
+
+[js]
+function foo(baz,bam){
+	console.log(this.bar+' '+baz+' '+bam);
+}
+var obj = {bar : "bar1"};
+foo = foo.bind(obj,"baz") //ES5 only, obj is this which foo is hard bound to so no matter from where foo is called this always refers to obj.
+foo("bam");
+[js]
+-> So if a function is this aware and you want it to be bound to particular context use bind();
+
+#New keyword
+-> Has nothing to do with creating classes.
+[js]
+function foo(){
+	this.baz = "baz";
+	console.log(this.bar+" "+this.baz);
+}
+var bar = "bar";
+var baz = new foo(); //constructor call. -> any general function with new keyword in front of it is constructor call.
+[js]
+-> 4 things happen when new keyword is put in front of function call
+	1. Creates empty object.
+	2. *Newly created object gets linked to another object.
+	3. Newly created object gets passed in as #this# context to the function call
+	4. If that function does not already return its own object, new keyword assumes that you meant to return the object that was passed in so it implies return this.
+-> 4 ways to create #this# context => 
+	-	implicit 
+	-	explicit
+	-	hard coded(bind)
+	-	new keyword
+#--- Order of Precendence for this keyword ---#
+1. Is the function called by new?
+2. Is the function called by call or apply(bind uses apply)?
+3. Was it called with context object?
+4. Default : global object(except strict mode)
+
+#Arrow function#
+-> arrow function doesnt have this keyword in them which means its gonna treat this as another variable and its gonna go look up in lexical scope chain for that variable.

@@ -1,0 +1,278 @@
+-----------------------------------------------------------
+    Objects
+-----------------------------------------------------------
+
+--= Objects =--
+[js]
+var myObj = {
+key: value
+// ...
+};
+var myObj = new Object();
+myObj.key = value;
+[js]
+=> The constructed form and the literal form result in exactly the same sort of object. 
+   The only difference really is that you can add one or more key/value pairs to the literal declaration, 
+   whereas with constructed-form objects, you must add the properties one by one.
+=> There are a few special object subtypes, which we can refer to as complex primitives.
+!Important!
+=> #function# is a subtype of object (technically, a “callable object”). Functions in JS are said to be “first class” in that they are basically just
+   normal objects (with callable behavior semantics bolted on), and so they can be handled like any other plain object.
+[js]
+var myObject = { };
+myObject[true] = "foo";
+myObject[3] = "bar";
+myObject[myObject] = "baz";
+myObject["true"]; // "foo"
+myObject["3"]; // "bar"
+myObject["[object Object]"]; // "baz"
+//== ES6 added computed property names ==//
+var prefix = "foo";
+var myObject = {
+[prefix + "bar"]: "hello",
+[prefix + "baz"]: "world"
+};
+myObject["foobar"]; // hello
+myObject["foobaz"]; // world
+[js]
+=> In objects, property names are always strings. If you use any other value besides a string (primitive) as the property, it will first be converted
+   to a string. This even includes numbers, which are commonly used as array indexes, so be careful not to confuse the use of numbers
+   between objects and arrays.
+
+=> There’s nothing special (outside of possible implicit #this# binding as explained earlier) about a function that comes from a property access.
+[js]
+var myArray = [ "foo", 42, "bar" ];
+myArray.baz = "baz";
+myArray.length; // 3
+myArray.baz; // "baz"
+[js]
+=> !Important! Arrays are objects, so even though each index is a positive integer, you can also add properties onto the array
+
+--- Object Assign ---
+[js]
+var newObj = Object.assign( {}, myObject );
+newObj.a; // 2
+newObj.b === anotherObject; // true
+newObj.c === anotherArray; // true
+newObj.d === anotherFunction; // true
+[js]
+=>Object.assign(..) takes a target object as its first parameter, and one or more source objects as its subsequent parameters. It iterates over all
+  the enumerable (see the following code), owned keys (immediately present) on the source object(s) and copies them (via = assignment only) to the target.
+=> The duplication that occurs for Object.assign(..), however, is purely = style assignment, so any special
+   characteristics of a property (like writable) on a source object are not preserved on the target object.
+--- Object.defineProperty ---
+[js]
+var myObject = {};
+Object.defineProperty( myObject, "a", {
+	value: 2,
+	writable: true,
+	configurable: true,
+	enumerable: true
+} );
+myObject.a; // 2
+[js]
+
+=> We can use Object.defineProperty(..) to add a new property, or modify an existing one (if it’s configurable).\
+=> The ability for you to change the value of a property is controlled by #writable#.
+=> As long as a property is currently #configurable#, we can modify its descriptor definition, using the same defineProperty(..) utility.
+	!Important! => changing #configurable# to false is a one-way action, and cannot be undone, same with #writable#.
+				=> #configurable# removes ability to delete the property.
+[js]
+Object.defineProperty( myObject, "a", {
+value: 2,
+writable: true,
+configurable: false,
+enumerable: true
+} );
+myObject.a; // 2
+delete myObject.a;
+myObject.a; // 2 - delete call fails as configurable is false.
+[js]
+
+=> #enumerable# characteristic controls whether a property will show up in certain object-property enumerations,
+   such as the for..in loop. Set enumerable to false to keep the property from showing up in such enumerations, 
+   even though it’s still completely accessible.
+--- Object Constant ---
+[js]
+var myObject = {};
+Object.defineProperty( myObject, "FAVORITE_NUMBER", {
+value: 42,
+writable: false,
+configurable: false
+} );
+[js]
+=> By combining writable:false and configurable:false, you can essentially create a constant (cannot be changed, redefined, or deleted)
+   as an object property.
+ !Refer - object_methods.png!
+
+--- Getters and Setters ---
+=> 	The default [[Put]] and [[Get]] operations for objects completely control how values are set to existing or new properties, 
+	or retrieved from existing properties, respectively.
+=> Getters are properties that actually call a hidden function to retrieve a value. Setters are properties that actually call a hidden
+   function to set a value.
+[js]
+var myObject = {
+// define a getter for `a`
+	get a() {
+		return 2;
+	}
+};
+Object.defineProperty(
+	myObject, // target
+	"b", // property name
+	{ // descriptor
+		// define a getter for `b`
+		get: function(){ return this.a * 2 },
+		// make sure `b` shows up as an object property
+		enumerable: true
+	}
+);
+myObject.a; // 2
+myObject.b;//4
+[js]
+
+[js]
+var myObject = {
+// define a getter for `a`
+	get a() {
+		return 2;
+	}
+};
+myObject.a = 3;
+myObject.a; // 2
+[js]
+=> 	we only defined a getter for a, if we try to set the value of a later,
+	the set operation won’t throw an error but will just silently throw the
+	assignment away
+[js]
+var myObject = {
+// define a getter for `a`
+	get a() {
+		return this._a_;
+	},
+	// define a setter for `a`
+	set a(val) {
+		this._a_ = val * 2;
+	}
+};
+myObject.a = 2;
+myObject.a; // 4
+[js]
+
+--- Existence ---
+=> The #in# operator will check to see if the property is in the object, or if it exists at any higher level of the [[Prototype]] 
+   chain object traversal  
+=> #hasOwnProperty(..)# checks to see if only myObject has the property or not, and will not consult the [[Prototype]] chain.
+=> 	#hasOwnProperty(..)# is accessible for all normal objects via delegation to Object.prototype. But it’s possible to create an object that does not link to 
+	#Object.prototype# (via #Object.create(null)#). In this case, a method call like myObject.hasOwnProperty(..) would fail.
+	-	In that scenario, a more robust way of performing such a check is
+		#Object.prototype.hasOwnProperty.call(myObject,"a")#, which
+		borrows the base hasOwnProperty(..) method and uses explicit binding
+		to apply it against our myObject.
+
+--- Enumeration ---
+[js]
+var myObject = { };
+Object.defineProperty(
+	myObject,
+	"a",
+	// make `a` enumerable, as normal
+	{ enumerable: true, value: 2 }
+);
+Object.defineProperty(
+	myObject,
+	"b",
+	// make `b` NON-enumerable
+	{ enumerable: false, value: 3 }
+);
+myObject.b; // 3
+("b" in myObject); // true
+myObject.hasOwnProperty( "b" ); // true
+// .......
+for (var k in myObject) {
+console.log( k, myObject[k] );
+}
+// "a" 2
+[js]
+=> #enumerable# basically means #will be included if the object’s properties are iterated through#.
+[js]
+var myObject = { };
+Object.defineProperty(
+	myObject,
+	"a",
+	// make `a` enumerable, as normal
+	{ enumerable: true, value: 2 }
+);
+Object.defineProperty(
+	myObject,
+	"b",
+	// make `b` nonenumerable
+	{ enumerable: false, value: 3 }
+);
+myObject.propertyIsEnumerable( "a" ); // true
+myObject.propertyIsEnumerable( "b" ); // false
+Object.keys( myObject ); // ["a"]
+Object.getOwnPropertyNames( myObject ); // ["a", "b"]
+[js]
+
+--- Iterators ---
+=> 	#forEach(..)# will iterate over all values in the array, and it ignores any
+	callback return values. 
+=>	#every(..)# keeps going until the end or the
+	callback returns a false (or “falsy”) value.
+=>	#some(..)# keeps going until the end or the callback returns a true (or “truthy”) value.
+[js]
+var myArray = [ 1, 2, 3 ];
+for (var v of myArray) {
+	console.log( v );
+}
+// 1
+// 2
+// 3
+
+var myArray = [ 1, 2, 3 ];
+var it = myArray[Symbol.iterator]();
+it.next(); // { value:1, done:false }
+it.next(); // { value:2, done:false }
+it.next(); // { value:3, done:false }
+it.next(); // { done:true }
+[js]
+=>	#ES6 adds a for..of# loop syntax for iterating over arrays (and objects, if the object defines its own custom iterator).
+=> #@@iterator# is not the iterator object itself, but a function that returns the iterator object
+=> While arrays do automatically iterate in for..of loops, regular objects do not have a built-in @@iterator. 
+!Important!
+[js]
+var myObject = {
+	a: 2,
+	b: 3
+};
+Object.defineProperty( myObject, Symbol.iterator, {
+				enumerable: false,
+				writable: false,
+				configurable: true,
+				value: function() {
+				var o = this;
+				var idx = 0;
+				var ks = Object.keys( o );
+				return {
+				next: function() {
+					return {
+				value: o[ks[idx++]],
+				done: (idx > ks.length)
+				};
+				}
+				};
+				}
+				} );
+// iterate `myObject` manually
+var it = myObject[Symbol.iterator]();
+it.next(); // { value:2, done:false }
+it.next(); // { value:3, done:false }
+it.next(); // { value:undefined, done:true }
+// iterate `myObject` with `for..of`
+for (var v of myObject) {
+console.log( v );
+}
+// 2
+// 3
+[js]

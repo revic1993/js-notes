@@ -1,0 +1,127 @@
+-----------------------------------------------------------
+    Class - ES6 spec
+-----------------------------------------------------------
+[js]
+class Foo{
+	constructor(who){
+		this.me = who;
+	}
+	identify(){
+		return "I am "+this.me;
+	}
+}
+var a1 = new Foo("a1");
+var a2 = new Foo("a2");
+a1.identify(); //I am a1
+a2.identify();//I am a2
+[js]
+=> above code is same as prototype class system.
+
+[js]
+class Bar extends Foo{
+	identify(){
+		alert("Hello "+super.identify()+" "); //super allows you for shadowing. The system is still same.
+	}
+}
+var b1 = new Bar("b1");
+var b2 = new Bar("b2");
+b1.identify(); //alerts : hello i am b1;
+b2.identify();//alerts : hello i am b2;
+[js]
+
+--- static constructor inhertiance --- 
+[js]
+class Foo{
+	#same constructor and identify
+	static hello(){return "hello"};
+}
+
+class Bar extends Foo{
+	speak(){
+		alert("Hello, "+this.identify()+".");
+	}
+}
+Foo.hello();//hello
+Bar.hello();//hello
+[js]
+
+=> static adds method to the class instead of the instance.So the classes themselves have an inhertiance.
+	- #Line 45 # Bar did not have hello but is able to access static method of Foo cause of #class inhertiance#.
+
+--- Class Caution ---
+[js]
+//=======//
+var Foo = {};
+class Bar extends Foo{ //runtime error - cant extend an object. can only extend class. cant mix classes and objects. 
+
+}
+//=======//
+class Foo{
+	constructor(){
+		//..
+	}
+}
+class Bar{
+	constructor(who){
+		//..
+	}
+}
+Foo(); // error - even its just syntax sugar and foo actually is a function but you cant call it. Only allowed to use with new keyword
+Bar.call({});// error
+//=======//
+class A{
+	one(){console.log("one:A")};
+	two(){console.log("two:A")};
+}
+
+var B = {
+	one(){console.log("one:B")};
+	two(){console.log("two:B")};
+};
+class C extends A{
+	foo(){
+		this.one();
+		super.two();
+	}
+}
+var x = new C();
+x.foo(); //one:A two:A
+x.foo.call(B); // one:B two:A
+//=======//
+class A{
+	#same
+}
+class B extends A{}
+B.prototype.foo = function(){
+	this.one();
+	super.two(); //throws syntax error.
+}
+//=======//
+var B = {
+	__proto__:A.prototype,
+	foo(){
+		this.one();
+		super.two();
+	}
+	bar : function(){
+		this.one();
+		super.two(); //throws error. only allowed in consice methods like on #line 102. This is for backwards compatibility as in previous version people used super as variable name
+					// and devs wanted to introduce keyword in new definition which wouldn't be used in previous versions.
+	}
+}
+//=======//
+#a is same class with one and two methods
+var B = Object.assign(Object.create(A.prototype),{
+		foo(){
+			this.one();
+			super.two(); //error two doesnt exist
+		}
+	});
+B.foo();
+//=======//
+[js]
+
+=> super must come before any accesor in constructor.
+	- the most parent class is the one that creates and initializes child class.
+=> #super# keyword is static and can't be overwritten by dynamic binding calls like #call# and #apply#. Hence on !Line89! we have two:A instead of two:B.
+=> #super# is static just for performance reasons. As the devs dont want to figure out dynamically.

@@ -1,0 +1,93 @@
+-----------------------------------------------------------
+    Inheritance
+-----------------------------------------------------------
+
+--- Behaviour Delegation ---
+[js]
+function Foo(who){
+	this.me = who;
+}
+Foo.prototype.speak = function(){
+	alert("Hello, I am "+ this.me+".");
+}
+var a1 = new Foo("a1");
+a1.speak();//alert : Hello I am a1.
+[js]
+=> speak on !Line 14! refers to Foo.prototype.speak. a1 doesnt have a speak method but we delegate from a1 to another object that has that method => I.E. Foo.prototype
+
+-----------------------------------------------------------
+    OLOO : Objects Linked to Other Objects
+-----------------------------------------------------------
+[js]
+ function Foo(who){
+ 	this.me = who;
+ }
+ Foo.prototype.identify = function(){
+ 	return " I am "+this.me;
+ }
+
+ function Bar(who){
+ 	Foo.call(this,who);
+ }
+
+ Bar.prototype = Object.create(Foo.prototype);
+ 
+ Bar.prototype.speak = function(){
+ 	alert("Hello, "+this.identify()+".");
+ }
+
+ var b1 = new Bar("b1");
+ b1.speak();
+ [js]
+ --- OLOO ---
+ => replace #new# keyword with Object.create call on !line 39!. (first 2 steps of new does creation and last two does initialization so we are gonna seperate it)
+ => !line 65! calls bar function for initialization. thus seperating new into two parts.
+ => 
+#better version of above snippet#
+ [js]
+ function Foo(who){
+ 	this.me = who;
+ }
+ Foo.prototype.identify = function(){
+ 	return " I am "+this.me;
+ }
+
+ function Bar(who){
+ 	Foo.call(this,who);
+ }
+
+ Bar.prototype = Object.create(Foo.prototype);
+ 
+ Bar.prototype.speak = function(){
+ 	alert("Hello, "+this.identify()+".");
+ }
+
+ var b1 = Object.create(Bar.prototype); //creates without initialization
+ Bar.call(b1,"b1");
+ b1.speak();
+
+ // Improvement code round 2
+ var Bar = Object.create(Foo.prototype);
+ Bar.init = function(who){
+ 	Foo.call(this,who);
+ };
+ Bar.speak = function(){
+ 	alert("Hello, "+this.identify()+".");
+ }
+ var b1 = Object.create(Bar);
+ b1.init("b1");
+ b1.speak();
+ // Improvement code round 2 ends
+ //Improvement code round 3
+ var Foo = {
+ 	init : function(who){
+ 		this.me = who;
+ 	},
+ 	identify : function(){
+ 		return "Im "+this.me;
+ 	}
+ }
+ //Improvement code round 3 ends
+[js]
+
+

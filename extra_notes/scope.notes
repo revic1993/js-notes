@@ -1,0 +1,71 @@
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Strict_mode
+-----------------------------------------------------------
+    Scope : JavaScript
+-----------------------------------------------------------
+
+
+=> scope : where to look for things
+=> javascript has a compiler although it is viewed as interpreted language
+=> javascript goes through two passes : 1st pass convert the source code into intermediery representation of binary code and on the second pass it is executed
+!Important! => javascript scope : individual unit of scope is function
+=> #shadowing# : using the same variable name at diff scope level
+=> unfullfilled lhs value creates global variable, unfullfilled rhs creates error in non strict mode, while in strict mode both results in error
+=> #undefined# - declared but no value
+=> #undeclared# - not declared in any scope
+=> Named function expressions : var keyHandler = function keyHandler(){
+	=> their scope is within themselves. so they are not in global scope
+	- Benefits : 
+				1. Handy self reference. can be used in recurssion or in keybinding. the outer keyhandler can be reassigned later but the named function identifier is read only;
+				2. More debuggable stack trace : uses the name in stack trace instead of error in anonymous function
+				3. more self documenting code
+}
+=> bob(); -> this is RHS value so first the bob expression is looked up whatever value its holding and then the parantheses is executed which happens to be a reference to a function
+=> function declaration vs function expression -> if the word function is not literally first thing on the line then its function expression e.g.
+	function abcd(){				|	var a = function abcd(){				(function abcd(){
+							vs		|									or 
+	}								|			}								});
+=> #let keyword# -> enforces block level scoping, while var is function level scoping
+=> #const keyword# -> const is not a value that doesnt change but its a variable that can't be reassigned, so changing value is also kind of reassingment
+	-	so const f = 2 and f++ will throw error cause we are trying to reassign f by incrementing it
+	-	but const arr = [2] and arr[0]++ will not throw an error cause its value is a reference which essentially is not changing
+
+#Mutable and immutable difference#
+[js]
+{
+var immutableString = "Hello";
+// In the above code, a new object with string value is created.
+immutableString = immutableString + "World";
+// We are now appending "World" to the existing value.
+}
+[js]
+
+On appending the "immutableString" with a string value, following events occur:
+- Existing value of "immutableString" is retrieved
+- "World" is appended to the existing value of "immutableString"
+- The resultant value is then allocated to a new block of memory
+- "immutableString" object now points to the newly created memory space
+- Previously created memory space is now available for garbage collection.
+
+=> executing undefined value would throw typeerror
+[js]
+{
+	var d;
+	d(); //throws typeerror cause the anonymous function doesnt get registered during comilation stage as its function expression and not declaration.
+	d = function(){
+	}
+}
+[js]
+=> mutual recursion(circular dependancy) is not possible when using function expression instead of function declaration
+=> var and function can be hoisted , let and const are also hoisted but are not initialized in the end producing #referenceerror# ->
+[js]
+{
+	a = 20; //ok
+	var a; 
+	but
+	a = 20; //referenceerror
+	let a;
+}
+[js]
+-> when two passes occur i.e. compile and run in a script, any variable when the scope of the variable is entered is initialized as undefined during runtime, 
+	while let keyword adds declaration during compilation but do not get intialized during runtime; 
+	so thats why let and const are hoisted during compile time but not initialized during runtime

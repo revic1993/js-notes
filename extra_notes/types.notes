@@ -1,0 +1,73 @@
+-----------------------------------------------------------
+    Types
+-----------------------------------------------------------
+What is Type?
+	- In a statically typed language like c++ or java a type is a description of what can go in a variable.
+	- In dynamic languages, there are types but we dont focus on variable having the type instead we focus on value having the type.
+	- type is set of intrinsic behaviour that we can expect given any particular value.(JS)
+--- Primitive Types ---
+- undefined
+- string
+- number
+- boolean
+- object
+- #function
+- #null
+[js]
+typeof foo; //what is type of value inside foo - "undefined"
+			// always returns string 
+typeof null; // "object" is a bug
+[js]
+--> Typeof is only mechanism that is able to deal with a operator that is non existant
+--- Special Values ---
+- NaN
+- Infinity,-Infinity
+- null (its a value as well as type)
+- undefined(void)
+- +0,-0
+[js]
+var a = "a"/2; => NaN/2=> NaN
+a; //NaN
+typeof a; //"number"
+isNaN(a); //true
+isNaN("foo");//true
+Number.isNaN("foo"); //false.
+[js]
+#NaN# 
+ - anytime when a value is tried to be converted into a number and that conversion fails, the resultant value is #NaN#
+ - NaN does not have identity property. It is not equal to itself.
+ -	use Number.isNaN instead of isNaN;
+#-0#
+[js]
+var foo = 0/-3;
+foo === -0; //true
+foo === 0; //true
+0 === -0; //true
+foo;//0
+1/-0 === -Infinity;
+function isNeg0(x){
+	return x===0 && 1/x===-Infinity;
+}
+isNeg0(0/3);//false
+isNeg0(0/-3);//true
+[js]
+=> - is treated as operator instead of literal like 3. 
+=> !line 44! === is lying. all the different operation that are occuring on -0, pretend to be operating on normal 0.
+
+--- Object.is() ---
+-> Introduced in ES6;
+[js]
+Object.is("foo",NaN);//false
+Object.is(-0,0);//false
+[js]
+
+--- Native Function ---
+	-	String
+	-	Number
+	-	Boolean
+	- 	Function
+	-	Object
+	-	Array
+	-	RegExp
+	-	Date
+	-	Error

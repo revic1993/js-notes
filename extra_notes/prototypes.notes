@@ -1,0 +1,157 @@
+-----------------------------------------------------------
+    Prototypes
+-----------------------------------------------------------
+=> Objects are built by constructor calls (function call with new keyword ).
+=> Objects and classes are not live link or linked in any manner apart from the reference at construction time.
+
+------ Javascript -----
+=>!Important! Javascript doesnt do copying. It follows retroactive inheritance. It means after constructing object we can change the blue print and reflect it in object.
+=> A constructor makes an object #linked to# instead of #copy# of its own Prototypes.
+
+
+--- IMPORTANT ---
+=> Before our program runs two entities exist:
+	1. Object Function.
+	2. Object itself which is linked to object function via property of #prototype.# -> refered to as object.prototype
+	3. Theres a linkage that goes from object.prototype to object function which is refered to as #.constructor# . (it may as well be called .foo instead of .constructor)
+		----- this property does not mean object.prototype is constructed by object function. Its just a function that references object function.
+
+#REFER SLIDES OF PROTOTYPE FOR FOLLOWING CODE SNIPPET#
+[js]
+function Foo(who){ 
+this.me = who;
+}
+Foo.prototype.identify = function(){
+	return "I am "+this.me;
+}
+
+var a1 = new Foo("a1");
+var a2 = new Foo("a2");
+a2.speak = function(){
+	alert("Hello, "+this.identify()+".");
+};
+a1.constructor === Foo;
+a1.constructor === a2.constructor;
+a1.__proto__ === Foo.prototype;
+a2.__proto__ === a1.__proto__;
+a1.__proto__ === Object.getPrototypeOf(a1);
+a1.identify(); //I am a1
+[js]
+=> Line 20 
+	-	created a function Foo and also created an object, which is refered to it as Foo.prototype.
+	-	created a link back from object to function via property of .constructor.
+	- 	theres a linkage between Foo.prototype and Object.prototype.
+=> Line 23
+	- identify property is added to object Foo.prototype
+=> Line 27
+	- creates new object.
+	- it gets linked to Foo.prototype
+	- this newly created object is passed as #this# to function Foo, and so is assigned me property to its object.
+	- #this# context is implicitly returned.
+=> Line 28 -> same as Line 27
+=> Line 29 
+	- speak is assigned to a2 object.
+=> Line 32
+	- a1.constructor property does not exist so default behaviour of js kicks in called prototype chain.
+	- It follows linkage to next object in chain which is Foo.prototype
+	- And Foo.prototype.constructor = Foo
+	- So this is just happy accident.
+=> a1 is internally linked with Foo.prototype
+	-	JS people added __proto__ (dunder proto) property to as way to access internal link (was temp hack but ppl started using it and became standard and is in spec).
+=> Line 34	
+	- __proto__ of a1 links to object of Foo.prototype
+=> Line 35
+	#---> Object.getPrototypeOf is supported in IE. not __proto__#
+=> Line 37
+	- a1 doesnt have identify
+	- it traces back to Foo.prototype and it does have identify.
+	- this of a1 is passed via implicit binding.
+=>  Prototype chain is mirror of lexical scope chain.
+	- #this# in prototype chain is dynamic form of lexical scope.
+
+#Snippet code inherits above snippet#
+[js]
+a1.identify = function(){ //shadowing of function
+	alert("hello "+this.identify()+"."); //calling identify on line 73
+};
+a1.identify(); //error for recursivly calling itself infinitely
+[js]
+
+#Snippet inherits above code.
+[js]
+a1.identify = function(){
+	alert("hello "+this.__proto__.identify()+'.');
+};
+a1.identify();
+[js]
+=> Line 84
+	- not gonna print out "I am a1." cause of this context. As __proto__ points to Foo.prototype and its context is passed to identify.
+	- to make it work we have to replace #Line 82# with this.__proto__.identify.call(this) to pass context of a1 explicitly.
+	- but that is also breakable. Consider following scenario : 
+		=> An object x is created in chain of a1 and call x.identify()
+			- As it doesnt have identify we are gonna trace back to a1.identify property with #this# referring to x.
+			- So this.__proto__ will result in X and it will be infinite recursion -> x.identify -> a1.identify -> this.__proto__ -> x (!circular recursion!)
+			- So everytime we extend inheritance chain then one more __proto__ needs to be appended for x.identify to work.
+--- We dont have super() with the prototype system in Javascript unlike other OO languages like java.
+#snippets inherits above code#
+[js]
+a1.identify = function(){ //shadowing
+	alert("hello "+
+		Foo.prototype.identify.call(this) //removes dynamic calling of prototype chain
+		+".")
+}
+a1.identify(); //I am a1.
+[js]
+
+#Supercedes above snippets#
+[js]
+Foo.prototype.identify = function(){
+	return "I am "+this.me;
+}
+Foo.prototype.speak = function(){
+	alert("Hello "+ this.identify()+" .");
+}
+var a1 = new Foo("a1");
+a1.speak(); //alerts "Hello I am a1";
+[js]
+--- Important : avoid shadowing of methods ---
+=> Line 114
+	- checks for speak on a1. Its not present goes to Foo.prototype and calls speak by implicitly passing its context as #this#.
+	- #Line 111# calls a1 again for identify which is not present. It goes up the chain to Foo.prototype again implicitly passing a1's context as #this#
+	- returns "I am a1"
+	- alerts "Hello I am a1".
+
+--- Objects Linked ---
+[js]
+ function Foo(who){
+ 	this.me = who;
+ }
+ Foo.prototype.identify = function(){
+ 	return " I am "+this.me;
+ }
+
+ function Bar(who){
+ 	Foo.call(this,who);
+ }
+ //Bar.prototype = new Foo(); //Or
+ Bar.prototype = Object.create(Foo.prototype);
+ // Note : .constructor is borked here, need to fix. 
+ Bar.prototype.speak = function(){
+ 	alert("Hello, "+this.identify()+".");
+ }
+
+ var b1 = new Bar("b1");
+ var b2 = new Bar("b2");
+ b1.speak();// Hello I am b1;
+ b2.speak(); //Hello I am b2;
+[js]
+=> Line 132 
+	-	Bar prototype links to the Object.prototype like all functions do.
+	-	To link it to Foo.prototype we wrote #Line 136
+	-	Object.create //performs first two steps of new operator.
+		=> create new object
+		=> link it to another object. in this case its Foo.prototype
+=> Line 144
+	- b1 is linked to Bar.prototype which is linked to Foo.prototype.
+
+--- Linked Prototype Diagram ---

@@ -1,0 +1,126 @@
+-----------------------------------------------------------
+    Scopes and Closures
+-----------------------------------------------------------
+
+[js]
+function foo(a) {
+console.log( a ); // 2
+}
+foo( 2 );
+[js]
+=> !line 9! invokes foo(..) as a function call requires an RHS reference to foo, meaning, “Go look up the value of foo, and give it to me.” 
+   Moreover, (..) means the value of foo should be executed, so it’d better actually be a function!
+
+=>#ReferenceError# is scope resolution-failure related, whereas #TypeError# implies that scope resolution was successful, but that there was an 
+  illegal/impossible action attempted against the result.
+=> The lexical scope look-up process only applies to first-class identifiers, such as the a, b, and c. If you had a reference to foo.bar.baz in a piece
+   of code, the lexical scope look-up would apply to finding the foo identifier, but once it locates that variable, object property-access rules
+   take over to resolve the bar and baz properties, respectively.
+   #with and eval#
+=> In addition to being a bad idea to use, both eval(..) and with are affected (restricted) by Strict Mode. with is outright disallowed,	
+	whereas various forms of indirect or unsafe eval(..) are disallowed while retaining the core functionality.
+
+[js]
+var a = 2;
+(function IIFE( def ){
+def( window );
+})(function def( global ){
+						var a = 3;
+						console.log( a ); // 3
+						console.log( global.a ); // 2
+			});
+[js]
+=> above pattern is called UMD(Universal Module Definition).
+--- Block Scope ---
+=> you have two or more catch clauses in the same scope that each declare their error variable with the same identifier name. 
+	This is not actually a redefinition, since the variables are safely block-scoped.
+--- Hoisting ---
+[js]
+foo();
+function foo() {
+console.log( a ); // undefined
+var a = 2;
+}
+[js]
+=> The function foo’s declaration (which in this case includes the implied value of it as an actual function) is hoisted, 
+	such that the call on the !line 39! is able to execute
+=> Function declarations are hoisted, as we just saw. But function expressions are not.
+
+[js]
+foo(); // 1
+var foo;
+function foo() {
+	console.log( 1 );
+}
+foo = 	function() {
+			console.log( 2 );
+		};
+[js]
+=> #Both function declarations and variable declarations are hoisted. #
+	#But a subtle detail (that can show up in code with multiple “duplicate” declarations) is that functions are hoisted first, and then variables.#
+
+[js]
+foo(); // 3
+function foo() {
+	console.log( 1 );
+}
+var foo = function() {
+			console.log( 2 );
+		  };
+function foo() {
+	console.log( 3 );
+}
+[js]
+=> #While multiple/duplicate var declarations are effectively ignored, subsequent function declarations do override previous ones.#
+
+--- closure --- 
+[js]
+function wait(message) {
+	setTimeout( function timer(){
+		console.log( message );
+	}, 1000 );
+}
+wait( "Hello, closure!" );
+[js]
+=> We take an inner function (named timer) and pass it to setTime
+out(..). But timer has a scope closure over the scope of wait(..),
+indeed keeping and using a reference to the variable message.
+A thousand milliseconds after we have executed wait(..), and its
+inner scope should otherwise be long gone, that anonymous function
+still has closure over that scope
+
+--- ES6 modules --- 
+//bar.js
+[js]
+function hello(who) {
+	return "Let me introduce: " + who;
+}
+export hello;
+[js]
+//foo.js
+[js]
+// import only `hello()` from the "bar" module
+import hello from "bar";
+var hungry = "hippo";
+function awesome() {
+	console.log(hello( hungry ).toUpperCase());
+}
+export awesome;
+[js]
+//baz.js
+[js]
+// import the entire "foo" and "bar" modules
+module foo from "foo";
+module bar from "bar";
+	console.log(bar.hello( "rhino" )); // Let me introduce: rhino
+	foo.awesome(); // LET ME INTRODUCE: HIPPO
+[js]
+=> #import# imports one or more members from a module’s API into the
+current scope, each to a bound variable 
+=> #module# imports an entire module API to a bound variable (foo, bar in our
+case). 
+=> #export# exports an identifier (variable, function) to the public
+API for the current module. These operators can be used as many times
+in a module’s definition as is necessary.
+
+==== Revise Appendix C for lexical #this# ====
