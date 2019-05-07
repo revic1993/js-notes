@@ -2,3 +2,13 @@
     Async - You dont know JS
 -----------------------------------------------------------
 
+#Revealing Constructor#
+[js]
+var p = new Promise(function (resolve, reject) {
+    // Use `resolve` to resolve `p`.
+    // Use `reject` to reject `p`.
+});
+[js]
+=>  We see here that the Promise constructor takes a single function as its sole parameter (called the “executor function”). 
+    It then immediately calls that function with two arguments, resolve and reject. 
+    These arguments have the capability to manipulate the internal state of the newly-constructed Promise instance p
