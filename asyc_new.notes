@@ -12,3 +12,8 @@ var p = new Promise(function (resolve, reject) {
 =>  We see here that the Promise constructor takes a single function as its sole parameter (called the “executor function”). 
     It then immediately calls that function with two arguments, resolve and reject. 
     These arguments have the capability to manipulate the internal state of the newly-constructed Promise instance p
+
+#Then-able duck typing#
+=>  The standards decision to hijack the previously nonreserved -- and completely general-purpose sounding -- then property name means that no value (or any of its delegates), 
+    either past, present, or future, can have a then(..) function present, either on purpose or by accident, 
+    or that value will be confused for a thenable in Promises systems, which will probably create bugs that are really hard to track down.
