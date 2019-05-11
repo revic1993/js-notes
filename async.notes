@@ -123,3 +123,96 @@ p.then(
 => 	Why couldn't it just call the error handler we have defined there? 
 	Seems like a logical behavior on the surface. But it would violate the fundamental principle that Promises are #immutable# once resolved. 
 	p was already fulfilled to the value 42, so it can't later be changed to a rejection just because there's an error in observing p's resolution.
+
+#Trustable promise#
+-> If you pass an immediate, non-Promise, non-thenable value to Promise.resolve(..), you get a promise that's fulfilled with that value.
+[js]
+var p1 = new Promise( function(resolve,reject){
+	resolve( 42 );
+} );
+
+var p2 = Promise.resolve( 42 );
+[js]
+=> p1 and p2 will behave identically.
+=> But if you pass genuine promise to #Promise.resolve()# you just get the same promise back
+[js]
+var p1 = Promise.resolve( 42 );
+var p2 = Promise.resolve( p1 );
+p1 === p2; //true
+[js]
+=> 	Even more importantly, if you pass a non-Promise thenable value to Promise.resolve(..), 
+	it will attempt to unwrap that value, and the unwrapping will keep going until a concrete final non-Promise-like value is extracted.
+
+=> 	Promise.resolve(..) will accept any thenable, and will unwrap it to its non-thenable value. 
+	But you get back from Promise.resolve(..) a real, genuine Promise in its place, one that you can trust. 
+	If what you passed in is already a genuine Promise, you just get it right back, so there's no downside at all to filtering through Promise.resolve(..) to gain trust
+
+#Chain Flow#
+1.	Every time you call then(..) on a Promise, it creates and returns a new Promise, which we can chain with.
+2.	Whatever value you return from the then(..) call's fulfillment callback (the first parameter) is automatically set as 
+	the fulfillment of the chained Promise (from the first point).
+
+[js]
+// step 1:
+request( "http://some.url.1/" )
+
+// step 2:
+.then( function(response1){
+	foo.bar(); // undefined, error!
+
+	// never gets here
+	return request( "http://some.url.2/?v=" + response1 );
+} )
+
+// step 3:
+.then(
+	function fulfilled(response2){
+		// never gets here
+	},
+	// rejection handler to catch the error
+	function rejected(err){
+		console.log( err );	// `TypeError` from `foo.bar()` error
+		return 42;
+	}
+)
+
+// step 4:
+.then( function(msg){
+	console.log( msg );		// 42
+} );
+[js]
+
+=>	When the error occurs in step 2, the rejection handler in step 3 catches it. 
+	The return value (42 in this snippet), if any, from that rejection handler fulfills the promise for the next step (4), 
+	such that the chain is now back in a fulfillment state.
+[js]
+var p = new Promise( function(resolve,reject){
+	reject( "Oops" );
+} );
+
+var p2 = p.then(
+	function fulfilled(){
+		// never gets here
+	}
+	// assumed rejection handler, if omitted or
+	// any other non-function value passed
+	// function(err) {
+	//     throw err;
+	// }
+);
+
+var p = Promise.resolve( 42 );
+
+p.then(
+	// assumed fulfillment handler, if omitted or
+	// any other non-function value passed
+	// function(v) {
+	//     return v;
+	// }
+	null,
+	function rejected(err){
+		// never gets here
+	}
+);
+[js]
+# Resolve, Fulfill, and Reject #

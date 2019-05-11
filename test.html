@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>
+		Test
+	</title>
+</head>
+<body>
+<div id="console"></div>
+</body>
+<script type="text/javascript">
+	function delay(time){
+		return new Promise(function(resolve,reject){
+			setTimeout(resolve,time);
+		});
+	}
+	console.dir(delay(1000).then(function(){console.log("Called")}));
+</script>
+</html>
