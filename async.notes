@@ -97,5 +97,29 @@ p.then( baz, oopsBaz );
 => 	Promises are defined so that they can only be resolved once. If for some reason
 	the Promise creation code tries to call resolve(..) or reject(..) multiple times, or tries to call both, 
 	the Promise will accept only the first resolution, and will silently ignore any subsequent attempts.
-=> Promises can have, at most, one resolution value (#fulfillment or rejection#).
-!Refer promise_error.png!
+=> 	Promises can have, at most, one resolution value (#fulfillment or rejection#).
+=> 	If you call resolve(..) or reject(..) with multiple parameters, all subsequent parameters beyond the first will be silently ignored. 
+	Although that might seem a violation of the guarantee we just described, it's not exactly, because it constitutes an invalid usage of the Promise mechanism. 
+	Other invalid usages of the API (such as calling resolve(..) multiple times) are similarly protected, so the Promise behavior here is consistent.
+=> 	Promises turn even JS exceptions into asynchronous behavior, thereby reducing the race condition chances greatly. !Refer promise_error.png!
+#Interesting#
+[js]
+var p = new Promise( function(resolve,reject){
+	resolve( 42 );
+} );
+
+p.then(
+	function fulfilled(msg){
+		foo.bar();
+		console.log( msg );	// never gets here :(
+	},
+	function rejected(err){
+		// never gets here either :(
+	}
+);
+[js]
+=> 	What happens if a Promise is fulfilled, but there's a JS exception error during the observation (in a then(..) registered callback)? 
+	- 	The p.then(..) call itself returns another promise, and it's that promise that will be rejected with the TypeError exception and not the #rejected# itself.
+=> 	Why couldn't it just call the error handler we have defined there? 
+	Seems like a logical behavior on the surface. But it would violate the fundamental principle that Promises are #immutable# once resolved. 
+	p was already fulfilled to the value 42, so it can't later be changed to a rejection just because there's an error in observing p's resolution.
